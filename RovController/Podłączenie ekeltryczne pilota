@@ -1,0 +1,26 @@
+PA_0 - JOY_Y - BLACK
+PA_1 - JOY_X - WHITE
+PA_3 - POT1 - GREEN
+PA_4 - POT2 - BROWN
+PA_5 - POT3 - YELLOW
+PB_1 - POT4 - RED
+PA_7 - POT5 - BLUE
+PB_0 - POT6 - BLACK
+
+
+gpio: lcd pin number:
+PF_0 - 4
+PF_1 - 6
+PA_8 - 11
+PA_1 - 12
+PB_5 - 13
+PB_4 - 14
+
+RS485
+PB_7 - RS_RX
+PB_6 - RS_TX
+PA_10 - RS_DIR
+
+SWITCH:
+PA_9 - DISPLAY MOTORS
+PA_12 - JOY_EN

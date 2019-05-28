@@ -46,6 +46,7 @@
 #include "lcd.h"
 #include "rs485.h"
 #include "inputs.h"
+#include "frame_parser.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -293,13 +294,26 @@ int main(void)
 
 
 		// Wysyłanie do BlueRova wartości
-		msg_buff_length = sprintf(msg_buff,
+		/*msg_buff_length = sprintf(msg_buff,
 				"SET;%.3f;%.3f;%.3f;%.3f;%.3f;%.3f;%.3f;%.3f;\n", // 3 decimal point precision
 				axes.joy_x, axes.joy_y,
 				axes.pot1,	axes.pot2, axes.pot3,
 				axes.pot4, axes.pot5, z3);
+*/
+		controll_data_t ctrl;
 
-		RS_Transmit(&huart1, msg_buff, msg_buff_length);
+		ctrl.thrusters[0] = axes.pot1;
+		ctrl.thrusters[1] = axes.pot2;
+		ctrl.thrusters[2] = axes.pot3;
+		ctrl.thrusters[3] = axes.pot4;
+		ctrl.thrusters[4] = axes.pot5;
+
+		volatile frame_t frame = Parser_CreateControlFrame(&ctrl);
+
+		volatile uint8_t tx_buffer[200];
+		Parser_CreateTxBuffer(&frame, tx_buffer, 200);
+
+		RS_Transmit(&huart1, tx_buffer, 200);
 
 		tick++;
 		// 20 ms / 50 Hz
@@ -315,8 +329,7 @@ int main(void)
 		{
 			HAL_Delay(10);
 			// timeout 200ms
-			msg_buff_length = sprintf(msg_buff,
-					"BATT;BATT;BATT\n");
+
 			RS_Transmit(&huart1, msg_buff, msg_buff_length);
 
 			volatile HAL_StatusTypeDef ret = RS_Receive(&huart1, rx_data, RX_LENGTH, 1000);

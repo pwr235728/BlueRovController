@@ -18,7 +18,7 @@ void us_delay(uint32_t us)
 	LL_TIM_SetCounter(TIM3, MIN(65535, us));
 	LL_TIM_EnableCounter(TIM3);
 
-	// timer zlicza w dó³ wiec czekamy az zliczy
+	// timer zlicza w dï¿½ wiec czekamy az zliczy
 	while(LL_TIM_GetCounter(TIM3) > 0)
 	{
 	}

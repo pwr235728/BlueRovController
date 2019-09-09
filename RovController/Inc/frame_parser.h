@@ -29,7 +29,7 @@ typedef struct
 typedef struct
 {
 	uint8_t v_txt[8]; // example: 15.321V\0
-}voltage_frame_t;
+}voltage_data_t;
 
 typedef struct
 {
@@ -58,11 +58,14 @@ typedef enum
 uint8_t frame_GetHeaderSum(frame_t *frame);
 uint8_t frame_GetDataSum(frame_t *frame);
 
-ParserStatus Parser_ParseControllData(frame_t *frame, controll_data_t *out_data);
 ParserStatus Parser_ReadFrame(uint8_t data[], uint32_t data_len, frame_t *frame_out);
+
+ParserStatus Parser_ParseControllData(frame_t *frame, controll_data_t *out_data);
+ParserStatus Parser_ParseVoltageData(frame_t *frame, voltage_data_t *out_data);
 
 frame_t Parser_CreateControlFrame(controll_data_t *ctrlData);
 
 void Parser_CreateTxBuffer(frame_t *frame, uint8_t out_buff[], uint32_t max_len);
+void Parser_CreateVoltageRequest(uint8_t out_buff[], uint32_t max_len);
 
 #endif /* FRAME_PARSER_H_ */

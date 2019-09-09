@@ -241,7 +241,7 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-
+	volatile uint8_t tx_buffer[200];
 	while (1) {
 		MX_USART1_UART_Init();
 		float* pots_adc = (float*)&adc_reads;
@@ -310,10 +310,43 @@ int main(void)
 
 		volatile frame_t frame = Parser_CreateControlFrame(&ctrl);
 
-		volatile uint8_t tx_buffer[200];
+
 		Parser_CreateTxBuffer(&frame, tx_buffer, 200);
 
 		RS_Transmit(&huart1, tx_buffer, 200);
+
+		// 3s (60 tickow po 50ms)
+		if(tick - tick_vbat > 20)
+		{
+			HAL_Delay(50);
+			Parser_CreateVoltageRequest(tx_buffer, 200);
+			RS_Transmit(&huart1, tx_buffer, 200);
+
+			volatile HAL_StatusTypeDef ret = RS_Receive(&huart1, rx_data, 100, 200);
+
+			voltage_data_t volt;
+			frame_t frame;
+
+			if(Parser_ReadFrame(rx_data, 100, &frame) == PARSER_COMPLETE)
+			{
+				if(Parser_ParseVoltageData(&frame, &volt) == PARSER_COMPLETE)
+				{
+					for(int i=0;i<8; i++)
+					{
+						rx_data[i] = volt.v_txt[i];
+					}
+					rx_data[8] = 0;
+					rx_data[9] = 0;
+				}
+
+			}
+
+			tick_vbat = tick;
+		}else
+		{
+			HAL_Delay(50);
+		}
+
 
 		tick++;
 		// 20 ms / 50 Hz
@@ -322,33 +355,8 @@ int main(void)
 			Display(axes_deadzone, buttons, rx_data);
 			tick_display = tick;
 		}
-
-
-		// 3s (60 tickow po 50ms)
-		if(tick - tick_vbat > 60)
-		{
-			HAL_Delay(10);
-			// timeout 200ms
-
-			RS_Transmit(&huart1, msg_buff, msg_buff_length);
-
-			volatile HAL_StatusTypeDef ret = RS_Receive(&huart1, rx_data, RX_LENGTH, 1000);
-
-			if(ret == HAL_OK)
-			{
-
-			}else
-			{
-				//str_clear(rx_data, RX_LENGTH);
-				//rx_data[0] = '-';
-			}
-			tick_vbat = tick;
-		}
-
-
-
 		LL_GPIO_TogglePin(LD3_GPIO_Port, LD3_Pin);
-		HAL_Delay(50);
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

@@ -11,6 +11,7 @@ static const float THRUSTER_RANGE = 32000.0f;
 
 static const uint8_t START_CHAR = '>';
 static const uint8_t ID_CONTROLL_DATA = 'c';
+static const uint8_t ID_VOLTAGE_REQUEST_FRAME = 'r';
 static const uint8_t ID_VOLTAGE_FRAME = 'v';
 
 uint8_t frame_GetHeaderSum(frame_t *frame)
@@ -33,21 +34,6 @@ uint8_t frame_GetDataSum(frame_t *frame)
 	return sum;
 }
 
-ParserStatus Parser_ParseControllData(frame_t *frame, controll_data_t *out_data)
-{
-	if(frame->id != ID_CONTROLL_DATA)
-		return PARSER_ERROR;
-
-	for(int i=0; i<5; i++)
-	{
-		int16_t value = (int16_t)((uint16_t)(frame->data[i*2] << 8) | frame->data[i*2 + 1]);
-		float thruster = value;
-		thruster = thruster/THRUSTER_RANGE;
-
-		out_data->thrusters[i];
-	}
-	return PARSER_COMPLETE;
-}
 ParserStatus Parser_ReadFrame(uint8_t data[], uint32_t data_len, frame_t *frame_out)
 {
 	ParserState state = STATE_WAIT;
@@ -120,6 +106,40 @@ ParserStatus Parser_ReadFrame(uint8_t data[], uint32_t data_len, frame_t *frame_
 	return PARSER_ERROR;
 }
 
+ParserStatus Parser_ParseControllData(frame_t *frame, controll_data_t *out_data)
+{
+	if(frame->id != ID_CONTROLL_DATA)
+		return PARSER_ERROR;
+
+	for(int i=0; i<5; i++)
+	{
+		int16_t value = (int16_t)((uint16_t)(frame->data[i*2] << 8) | frame->data[i*2 + 1]);
+		float thruster = value;
+		thruster = thruster/THRUSTER_RANGE;
+
+		out_data->thrusters[i];
+	}
+	return PARSER_COMPLETE;
+}
+
+ParserStatus Parser_ParseVoltageData(frame_t *frame, voltage_data_t *out_data)
+{
+	if(frame->id != ID_VOLTAGE_FRAME)
+		return PARSER_ERROR;
+
+	// banana
+	if(frame->length != 8)
+		return PARSER_ERROR;
+
+	for(int i=0; i<frame->length; i++)
+	{
+		out_data->v_txt[i] = frame->data[i];
+	}
+
+	return PARSER_COMPLETE;
+}
+
+
 volatile frame_t Parser_CreateControlFrame(controll_data_t *ctrlData)
 {
 	volatile frame_t frame;
@@ -168,4 +188,13 @@ void Parser_CreateTxBuffer(frame_t *frame, uint8_t out_buff[], uint32_t max_len)
 	{
 		out_buff[r] = 0;
 	}
+}
+
+void Parser_CreateVoltageRequest(uint8_t out_buff[], uint32_t max_len)
+{
+	frame_t frame;
+	frame.id = ID_VOLTAGE_REQUEST_FRAME;
+	frame.length=0;
+
+	Parser_CreateTxBuffer(&frame, out_buff, max_len);
 }
